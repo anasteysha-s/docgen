@@ -1,0 +1,6 @@
+generated_docs/
+venv/
+__pycache__/
+*.pyc
+*.pdf
+*.docx

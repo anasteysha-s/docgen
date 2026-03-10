@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DocGen – Генератор документів</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0e1117;
+    --page:      #f7f5f0;
+    --card:      #ffffff;
+    --accent:    #1a3a5c;
+    --accent2:   #c8982a;
+    --muted:     #6b7280;
+    --border:    #ddd8cc;
+    --radius:    10px;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+    --serif:     'Playfair Display', serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--page);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  }
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-dot { color: var(--accent2); }
+  .badge {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    flex: 1;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    color: var(--accent);
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 300;
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    padding: 5px;
+    margin-bottom: 1.8rem;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.22s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    letter-spacing: 0.2px;
+  }
+  .tab-btn.active {
+    background: var(--card);
+    color: var(--accent);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  }
+  .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.5); color: var(--ink); }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .card-header {
+    padding: 1.4rem 1.8rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .doc-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+  }
+  .card-header h2 {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+  .card-header p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 300;
+  }
+  .card-body { padding: 1.6rem 1.8rem; }
+
+  /* ── FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.4rem;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  label span.req { color: var(--accent2); margin-left: 2px; }
+
+  input, textarea, select {
+    font-family: var(--sans);
+    font-size: 0.92rem;
+    color: var(--ink);
+    background: var(--page);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26,58,92,0.1);
+    background: white;
+  }
+  textarea { resize: vertical; min-height: 72px; line-height: 1.55; }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0.5rem 0 -0.2rem;
+    grid-column: 1 / -1;
+  }
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── FORMAT SELECTOR ── */
+  .format-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 1.4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+  }
+  .format-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-right: 4px;
+  }
+  .fmt-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.18s;
+  }
+  .fmt-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+  }
+  .fmt-btn:hover:not(.selected) { border-color: var(--accent); color: var(--accent); }
+
+  /* ── GENERATE BTN ── */
+  .generate-btn {
+    margin-left: auto;
+    padding: 10px 28px;
+    background: var(--accent2);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+  }
+  .generate-btn:hover { background: #b5841e; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(200,152,42,0.35); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── NOTIFICATION ── */
+  .notif {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--accent);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 999;
+    max-width: 320px;
+  }
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif.error { background: #c0392b; }
+  .notif.success { background: #1a5c3a; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 1.4rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    font-weight: 300;
+  }
+  footer code { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .spinner.show { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PANEL VISIBILITY ── */
+  .doc-panel { display: none; }
+  .doc-panel.active { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .format-row { flex-direction: column; align-items: flex-start; }
+    .generate-btn { margin-left: 0; width: 100%; justify-content: center; }
+    header { padding: 0 1rem; }
+    .badge { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DocGen<span class="logo-dot">.</span></div>
+  <span class="badge">v1.0 · BETA</span>
+</header>
+
+<div class="container">
+  <div class="hero">
+    <h1>Генерація документів<br/>за шаблоном</h1>
+    <p>Заповніть форму — отримайте готовий документ у форматі PDF або DOCX за лічені секунди.</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('contract', this)">
+      📄 Договір
+    </button>
+    <button class="tab-btn" onclick="switchTab('act', this)">
+      ✅ Акт виконаних робіт
+    </button>
+    <button class="tab-btn" onclick="switchTab('gdpr', this)">
+      🔒 GDPR-запит
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- ДОГОВІР -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="doc-panel active" id="panel-contract">
+    <div class="card">
+      <div class="card-header">
+        <div class="doc-icon">📄</div>
+        <div>
+          <h2>Договір надання послуг</h2>
+          <p>Стандартний двосторонній договір між замовником і виконавцем</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid" id="contract-form">
+
+          <div class="section-divider">Реквізити документа</div>
+
+          <div class="field">
+            <label>Номер договору <span class="req">*</span></label>
+            <input type="text" id="c-doc_number" placeholder="2024-001" value="2024-001"/>
+          </div>
+          <div class="field">
+            <label>Дата <span class="req">*</span></label>
+            <input type="date" id="c-date"/>
+          </div>
+          <div class="field">
+            <label>Місто <span class="req">*</span></label>
+            <input type="text" id="c-city" placeholder="Київ" value="Київ"/>
+          </div>
+          <div class="field">
+            <label>Строк оплати (робочих днів)</label>
+            <input type="number" id="c-payment_days" placeholder="5" value="5"/>
+          </div>
+
+          <div class="section-divider">Виконавець</div>
+
+          <div class="field">
+            <label>Назва / ПІБ Виконавця <span class="req">*</span></label>
+            <input type="text" id="c-provider_name" placeholder="ТОВ «Інтегра Солюшнс»"/>
+          </div>
+          <div class="field">
+            <label>ЄДРПОУ / ІПН</label>
+            <input type="text" id="c-provider_code" placeholder="12345678"/>
+          </div>
+          <div class="field full">
+            <label>Адреса Виконавця</label>
+            <input type="text" id="c-provider_address" placeholder="м. Київ, вул. Хрещатик, 1"/>
+          </div>
+
+          <div class="section-divider">Замовник</div>
+
+          <div class="field">
+            <label>Назва / ПІБ Замовника <span class="req">*</span></label>
+            <input type="text" id="c-client_name" placeholder="ТОВ «Клієнт Про»"/>
+          </div>
+          <div class="field">
+            <label>ЄДРПОУ / ІПН</label>
+            <input type="text" id="c-client_code" placeholder="87654321"/>
+          </div>
+          <div class="field full">
+            <label>Адреса Замовника</label>
+            <input type="text" id="c-client_address" placeholder="м. Львів, пр. Свободи, 5"/>
+          </div>
+
+          <div class="section-divider">Предмет і оплата</div>
+
+          <div class="field full">
+            <label>Опис послуг <span class="req">*</span></label>
+            <textarea id="c-service_description" placeholder="Розробка та впровадження корпоративного веб-застосунку"></textarea>
+          </div>
+          <div class="field">
+            <label>Сума договору (грн) <span class="req">*</span></label>
+            <input type="text" id="c-amount" placeholder="50 000"/>
+          </div>
+          <div class="field">
+            <label>Дедлайн виконання</label>
+            <input type="date" id="c-deadline"/>
+          </div>
+
+        </div>
+        <div class="format-row">
+          <span class="format-label">Формат:</span>
+          <button class="fmt-btn selected" onclick="selectFmt(this,'pdf','contract')" data-fmt="pdf">📕 PDF</button>
+          <button class="fmt-btn" onclick="selectFmt(this,'docx','contract')" data-fmt="docx">📘 DOCX</button>
+          <button class="generate-btn" onclick="generate('contract')">
+            <span class="spinner" id="spin-contract"></span>
+            ⬇ Згенерувати
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- АКТ -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="doc-panel" id="panel-act">
+    <div class="card">
+      <div class="card-header">
+        <div class="doc-icon">✅</div>
+        <div>
+          <h2>Акт виконаних робіт</h2>
+          <p>Підтвердження факту надання послуг із переліком і вартістю</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid" id="act-form">
+
+          <div class="section-divider">Реквізити акта</div>
+
+          <div class="field">
+            <label>Номер акта <span class="req">*</span></label>
+            <input type="text" id="a-doc_number" placeholder="АКТ-2024-001" value="АКТ-2024-001"/>
+          </div>
+          <div class="field">
+            <label>Дата акта <span class="req">*</span></label>
+            <input type="date" id="a-date"/>
+          </div>
+          <div class="field">
+            <label>Місто</label>
+            <input type="text" id="a-city" placeholder="Київ" value="Київ"/>
+          </div>
+          <div class="field">
+            <label>№ договору-підстави</label>
+            <input type="text" id="a-contract_number" placeholder="2024-001"/>
+          </div>
+          <div class="field">
+            <label>Дата договору</label>
+            <input type="date" id="a-contract_date"/>
+          </div>
+          <div class="field"></div>
+
+          <div class="section-divider">Сторони</div>
+
+          <div class="field">
+            <label>Виконавець <span class="req">*</span></label>
+            <input type="text" id="a-provider_name" placeholder="ТОВ «Інтегра Солюшнс»"/>
+          </div>
+          <div class="field">
+            <label>Замовник <span class="req">*</span></label>
+            <input type="text" id="a-client_name" placeholder="ТОВ «Клієнт Про»"/>
+          </div>
+
+          <div class="section-divider">Послуга і оплата</div>
+
+          <div class="field full">
+            <label>Найменування послуги <span class="req">*</span></label>
+            <input type="text" id="a-service_description" placeholder="Розробка корпоративного веб-застосунку"/>
+          </div>
+          <div class="field">
+            <label>Одиниця виміру</label>
+            <input type="text" id="a-unit" placeholder="послуга" value="послуга"/>
+          </div>
+          <div class="field">
+            <label>Кількість</label>
+            <input type="number" id="a-quantity" placeholder="1" value="1"/>
+          </div>
+          <div class="field">
+            <label>Сума (грн) <span class="req">*</span></label>
+            <input type="text" id="a-amount" placeholder="50 000"/>
+          </div>
+          <div class="field">
+            <label>Сума прописом</label>
+            <input type="text" id="a-amount_words" placeholder="П'ятдесят тисяч"/>
+          </div>
+
+        </div>
+        <div class="format-row">
+          <span class="format-label">Формат:</span>
+          <button class="fmt-btn selected" onclick="selectFmt(this,'pdf','act')" data-fmt="pdf">📕 PDF</button>
+          <button class="fmt-btn" onclick="selectFmt(this,'docx','act')" data-fmt="docx">📘 DOCX</button>
+          <button class="generate-btn" onclick="generate('act')">
+            <span class="spinner" id="spin-act"></span>
+            ⬇ Згенерувати
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- GDPR -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="doc-panel" id="panel-gdpr">
+    <div class="card">
+      <div class="card-header">
+        <div class="doc-icon">🔒</div>
+        <div>
+          <h2>GDPR-запит</h2>
+          <p>Запит на реалізацію прав суб'єкта персональних даних (GDPR / ЗУ «Про захист ПД»)</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid" id="gdpr-form">
+
+          <div class="section-divider">Реквізити запиту</div>
+
+          <div class="field">
+            <label>Номер запиту</label>
+            <input type="text" id="g-doc_number" placeholder="GDPR-2024-001" value="GDPR-2024-001"/>
+          </div>
+          <div class="field">
+            <label>Дата подачі <span class="req">*</span></label>
+            <input type="date" id="g-date"/>
+          </div>
+          <div class="field">
+            <label>Місто</label>
+            <input type="text" id="g-city" placeholder="Київ" value="Київ"/>
+          </div>
+          <div class="field"></div>
+
+          <div class="section-divider">Заявник (суб'єкт даних)</div>
+
+          <div class="field">
+            <label>ПІБ <span class="req">*</span></label>
+            <input type="text" id="g-client_name" placeholder="Іваненко Іван Іванович"/>
+          </div>
+          <div class="field">
+            <label>Дата народження</label>
+            <input type="date" id="g-birth_date"/>
+          </div>
+          <div class="field">
+            <label>Email <span class="req">*</span></label>
+            <input type="email" id="g-email" placeholder="ivan@example.com"/>
+          </div>
+          <div class="field">
+            <label>Телефон</label>
+            <input type="text" id="g-phone" placeholder="+380 XX XXX XX XX"/>
+          </div>
+
+          <div class="section-divider">Контролер персональних даних</div>
+
+          <div class="field">
+            <label>Назва організації <span class="req">*</span></label>
+            <input type="text" id="g-provider_name" placeholder="ТОВ «Компанія»"/>
+          </div>
+          <div class="field">
+            <label>Email DPO / відповідального</label>
+            <input type="email" id="g-dpo_email" placeholder="dpo@company.ua"/>
+          </div>
+          <div class="field full">
+            <label>Адреса організації</label>
+            <input type="text" id="g-provider_address" placeholder="м. Київ, вул. …"/>
+          </div>
+
+          <div class="section-divider">Тип і деталі запиту</div>
+
+          <div class="field">
+            <label>Право, яке реалізується <span class="req">*</span></label>
+            <select id="g-request_type">
+              <option>право на доступ до персональних даних</option>
+              <option>право на виправлення даних</option>
+              <option>право на видалення («право бути забутим»)</option>
+              <option>право на обмеження обробки</option>
+              <option>право на перенесення даних</option>
+              <option>право на заперечення проти обробки</option>
+            </select>
+          </div>
+          <div class="field"></div>
+          <div class="field full">
+            <label>Деталі та обґрунтування запиту</label>
+            <textarea id="g-request_details" placeholder="Прошу надати перелік усіх персональних даних, що обробляються стосовно мене, а також відомості про підстави та цілі їх обробки."></textarea>
+          </div>
+
+        </div>
+        <div class="format-row">
+          <span class="format-label">Формат:</span>
+          <button class="fmt-btn selected" onclick="selectFmt(this,'pdf','gdpr')" data-fmt="pdf">📕 PDF</button>
+          <button class="fmt-btn" onclick="selectFmt(this,'docx','gdpr')" data-fmt="docx">📘 DOCX</button>
+          <button class="generate-btn" onclick="generate('gdpr')">
+            <span class="spinner" id="spin-gdpr"></span>
+            ⬇ Згенерувати
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  DocGen · Python / Flask + ReportLab + python-docx ·
+  <code>POST /api/generate</code>
+</footer>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">
+  <span id="notif-icon">✓</span>
+  <span id="notif-text">Документ згенеровано!</span>
+</div>
+
+<script>
+/* ── STATE ── */
+const selectedFmt = { contract: 'pdf', act: 'pdf', gdpr: 'pdf' };
+
+/* ── TABS ── */
+function switchTab(type, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.doc-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + type).classList.add('active');
+}
+
+/* ── FORMAT SELECT ── */
+function selectFmt(btn, fmt, type) {
+  selectedFmt[type] = fmt;
+  const row = btn.closest('.format-row');
+  row.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+/* ── SET TODAY ── */
+function setDefaults() {
+  const today = new Date().toISOString().split('T')[0];
+  ['c-date','a-date','a-contract_date','g-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = today;
+  });
+}
+setDefaults();
+
+/* ── COLLECT FIELDS ── */
+function collectFields(prefix) {
+  const fields = {};
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+    const key = el.id.slice(prefix.length + 1);
+    fields[key] = el.value.trim();
+  });
+  return fields;
+}
+
+const PREFIX = { contract: 'c', act: 'a', gdpr: 'g' };
+
+/* ── GENERATE ── */
+async function generate(docType) {
+  const fields = collectFields(PREFIX[docType]);
+  const fmt = selectedFmt[docType];
+  const spinner = document.getElementById('spin-' + docType);
+  const btn = spinner.closest('.generate-btn');
+
+  btn.disabled = true;
+  spinner.classList.add('show');
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doc_type: docType, format: fmt, fields }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      showNotif('❌ ' + (err.error || 'Помилка сервера'), 'error');
+      return;
+    }
+
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `${docType}_${fields.doc_number || 'document'}.${fmt}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotif('✓ Документ успішно згенеровано!', 'success');
+
+  } catch (e) {
+    showNotif('❌ Помилка з\'єднання з сервером', 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.remove('show');
+  }
+}
+
+/* ── NOTIFICATION ── */
+let notifTimer;
+function showNotif(msg, type = 'success') {
+  const el = document.getElementById('notif');
+  document.getElementById('notif-text').textContent = msg;
+  el.className = 'notif ' + type + ' show';
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
