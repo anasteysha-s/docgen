@@ -9,7 +9,7 @@ import os
 import io
 import uuid
 from datetime import datetime
-from flask import Flask, request, jsonify, send_file, render_template_string
+from flask import Flask, request, jsonify, send_file, render_template, render_template_string
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -372,8 +372,7 @@ def generate_docx(doc_data):
 
 @app.route("/")
 def index():
-    with open(os.path.join(os.path.dirname(__file__), "templates", "index.html"), encoding="utf-8") as f:
-        return render_template_string(f.read())
+    return render_template("index.html")
 
 
 @app.route("/api/generate", methods=["POST"])
