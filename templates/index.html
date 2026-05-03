@@ -338,6 +338,99 @@
   .doc-panel { display: none; }
   .doc-panel.active { display: block; }
 
+  /* ── SERVICE ROWS (act) ── */
+  .services-block { display: flex; flex-direction: column; gap: 8px; }
+  .service-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.7fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .service-row input,
+  .service-row select {
+    font-size: 0.88rem;
+    padding: 8px 10px;
+  }
+  .service-row .line-total {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--accent);
+    text-align: right;
+    padding: 8px 10px;
+    background: var(--page);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .service-row .row-remove {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .service-row .row-remove:hover { color: #c0392b; border-color: #c0392b; background: white; }
+  .service-row .row-remove:disabled { opacity: 0.35; cursor: not-allowed; }
+  .service-header {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 0 4px;
+  }
+  .service-header > div { padding: 0 4px; }
+  .service-header .col-total { text-align: right; }
+  .add-row-btn {
+    align-self: flex-start;
+    margin-top: 4px;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    color: var(--muted);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.18s;
+  }
+  .add-row-btn:hover { border-color: var(--accent); color: var(--accent); background: white; }
+  #a-amount[readonly] {
+    background: #f0ece0;
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  @media (max-width: 720px) {
+    .service-row {
+      grid-template-columns: 1fr 1fr auto;
+      grid-template-areas:
+        "desc desc remove"
+        "unit qty   qty"
+        "price total total";
+      gap: 6px;
+    }
+    .service-row [data-f="description"] { grid-area: desc; }
+    .service-row [data-f="unit"]        { grid-area: unit; }
+    .service-row [data-f="quantity"]    { grid-area: qty; }
+    .service-row [data-f="unit_price"]  { grid-area: price; }
+    .service-row .line-total            { grid-area: total; }
+    .service-row .row-remove            { grid-area: remove; }
+    .service-header { display: none; }
+  }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
@@ -393,7 +486,7 @@
 
           <div class="field">
             <label>Номер договору <span class="req">*</span></label>
-            <input type="text" id="c-doc_number" placeholder="2024-001" value="2024-001"/>
+            <input type="text" id="c-doc_number" placeholder="2026-001" value="2026-001"/>
           </div>
           <div class="field">
             <label>Дата <span class="req">*</span></label>
@@ -401,7 +494,7 @@
           </div>
           <div class="field">
             <label>Місто <span class="req">*</span></label>
-            <input type="text" id="c-city" placeholder="Київ" value="Київ"/>
+            <input type="text" id="c-city" placeholder="Назва міста"/>
           </div>
           <div class="field">
             <label>Строк оплати (робочих днів)</label>
@@ -442,11 +535,11 @@
 
           <div class="field full">
             <label>Опис послуг <span class="req">*</span></label>
-            <textarea id="c-service_description" placeholder="Розробка та впровадження корпоративного веб-застосунку"></textarea>
+            <textarea id="c-service_description" placeholder="Опишіть надані послуги"></textarea>
           </div>
           <div class="field">
             <label>Сума договору (грн) <span class="req">*</span></label>
-            <input type="text" id="c-amount" placeholder="50 000"/>
+            <input type="text" id="c-amount" placeholder="0.00"/>
           </div>
           <div class="field">
             <label>Дедлайн виконання</label>
@@ -486,7 +579,7 @@
 
           <div class="field">
             <label>Номер акта <span class="req">*</span></label>
-            <input type="text" id="a-doc_number" placeholder="АКТ-2024-001" value="АКТ-2024-001"/>
+            <input type="text" id="a-doc_number" placeholder="АКТ-2026-001" value="АКТ-2026-001"/>
           </div>
           <div class="field">
             <label>Дата акта <span class="req">*</span></label>
@@ -494,11 +587,11 @@
           </div>
           <div class="field">
             <label>Місто</label>
-            <input type="text" id="a-city" placeholder="Київ" value="Київ"/>
+            <input type="text" id="a-city" placeholder="Назва міста"/>
           </div>
           <div class="field">
             <label>№ договору-підстави</label>
-            <input type="text" id="a-contract_number" placeholder="2024-001"/>
+            <input type="text" id="a-contract_number" placeholder="2026-001"/>
           </div>
           <div class="field">
             <label>Дата договору</label>
@@ -510,34 +603,31 @@
 
           <div class="field">
             <label>Виконавець <span class="req">*</span></label>
-            <input type="text" id="a-provider_name" placeholder="ТОВ «Інтегра Солюшнс»"/>
+            <input type="text" id="a-provider_name" placeholder="Виконавець"/>
           </div>
           <div class="field">
             <label>Замовник <span class="req">*</span></label>
-            <input type="text" id="a-client_name" placeholder="ТОВ «Клієнт Про»"/>
+            <input type="text" id="a-client_name" placeholder="Замовник"/>
           </div>
 
-          <div class="section-divider">Послуга і оплата</div>
+          <div class="section-divider">Послуги і оплата</div>
+
+          <div class="full services-block">
+            <div class="service-row service-header">
+              <div>Опис послуги</div>
+              <div>Од.</div>
+              <div>Кіл.</div>
+              <div>Ціна, грн</div>
+              <div class="col-total">Сума, грн</div>
+              <div></div>
+            </div>
+            <div id="act-services-list"></div>
+            <button type="button" class="add-row-btn" onclick="addServiceRow()">+ Додати послугу</button>
+          </div>
 
           <div class="field full">
-            <label>Найменування послуги <span class="req">*</span></label>
-            <input type="text" id="a-service_description" placeholder="Розробка корпоративного веб-застосунку"/>
-          </div>
-          <div class="field">
-            <label>Одиниця виміру</label>
-            <input type="text" id="a-unit" placeholder="послуга" value="послуга"/>
-          </div>
-          <div class="field">
-            <label>Кількість</label>
-            <input type="number" id="a-quantity" placeholder="1" value="1"/>
-          </div>
-          <div class="field">
-            <label>Сума (грн) <span class="req">*</span></label>
-            <input type="text" id="a-amount" placeholder="50 000"/>
-          </div>
-          <div class="field">
-            <label>Сума прописом</label>
-            <input type="text" id="a-amount_words" placeholder="П'ятдесят тисяч"/>
+            <label>Загальна сума (грн)</label>
+            <input type="text" id="a-amount" readonly value="0.00"/>
           </div>
 
         </div>
@@ -573,7 +663,7 @@
 
           <div class="field">
             <label>Номер запиту</label>
-            <input type="text" id="g-doc_number" placeholder="GDPR-2024-001" value="GDPR-2024-001"/>
+            <input type="text" id="g-doc_number" placeholder="GDPR-2026-001" value="GDPR-2026-001"/>
           </div>
           <div class="field">
             <label>Дата подачі <span class="req">*</span></label>
@@ -581,7 +671,7 @@
           </div>
           <div class="field">
             <label>Місто</label>
-            <input type="text" id="g-city" placeholder="Київ" value="Київ"/>
+            <input type="text" id="g-city" placeholder="Назва міста"/>
           </div>
           <div class="field"></div>
 
@@ -661,8 +751,7 @@
 
 <!-- NOTIFICATION -->
 <div class="notif" id="notif">
-  <span id="notif-icon">✓</span>
-  <span id="notif-text">Документ згенеровано!</span>
+  <span id="notif-text">Документ згенеровано! ✓</span>
 </div>
 
 <script>
@@ -695,10 +784,81 @@ function setDefaults() {
 }
 setDefaults();
 
+/* ── ACT: SERVICE ROWS ── */
+function addServiceRow(data) {
+  const list = document.getElementById('act-services-list');
+  const row = document.createElement('div');
+  row.className = 'service-row';
+  row.innerHTML = `
+    <input type="text"   data-f="description" placeholder="Опис послуги"/>
+    <select data-f="unit">
+      <option value="послуга">послуга</option>
+      <option value="години">години</option>
+    </select>
+    <input type="number" data-f="quantity"    placeholder="1" value="1" min="0" step="any"/>
+    <input type="number" data-f="unit_price"  placeholder="0.00" min="0" step="any"/>
+    <div class="line-total" data-f="line_total">0.00</div>
+    <button type="button" class="row-remove" onclick="removeServiceRow(this)" title="Видалити">×</button>
+  `;
+  if (data) {
+    row.querySelector('[data-f="description"]').value = data.description ?? '';
+    row.querySelector('[data-f="unit"]').value = data.unit ?? 'послуга';
+    row.querySelector('[data-f="quantity"]').value = data.quantity ?? '1';
+    row.querySelector('[data-f="unit_price"]').value = data.unit_price ?? '';
+  }
+  row.querySelectorAll('[data-f="quantity"], [data-f="unit_price"]').forEach(el => {
+    el.addEventListener('input', () => { recomputeRow(row); recomputeActTotal(); });
+  });
+  list.appendChild(row);
+  recomputeRow(row);
+  recomputeActTotal();
+}
+
+function removeServiceRow(btn) {
+  const list = document.getElementById('act-services-list');
+  if (list.children.length <= 1) return;
+  btn.closest('.service-row').remove();
+  recomputeActTotal();
+}
+
+function recomputeRow(row) {
+  const qty   = parseFloat(row.querySelector('[data-f="quantity"]').value)   || 0;
+  const price = parseFloat(row.querySelector('[data-f="unit_price"]').value) || 0;
+  row.querySelector('[data-f="line_total"]').textContent = (qty * price).toFixed(2);
+}
+
+function recomputeActTotal() {
+  let total = 0;
+  document.querySelectorAll('#act-services-list .service-row').forEach(row => {
+    const qty   = parseFloat(row.querySelector('[data-f="quantity"]').value)   || 0;
+    const price = parseFloat(row.querySelector('[data-f="unit_price"]').value) || 0;
+    total += qty * price;
+  });
+  const list = document.getElementById('act-services-list');
+  list.querySelectorAll('.row-remove').forEach(b => { b.disabled = list.children.length <= 1; });
+  document.getElementById('a-amount').value = total.toFixed(2);
+}
+
+addServiceRow();
+
+function collectActServices() {
+  const services = [];
+  document.querySelectorAll('#act-services-list .service-row').forEach(row => {
+    services.push({
+      description: row.querySelector('[data-f="description"]').value.trim(),
+      unit:        row.querySelector('[data-f="unit"]').value.trim(),
+      quantity:    row.querySelector('[data-f="quantity"]').value.trim(),
+      unit_price:  row.querySelector('[data-f="unit_price"]').value.trim(),
+    });
+  });
+  return services;
+}
+
 /* ── COLLECT FIELDS ── */
 function collectFields(prefix) {
   const fields = {};
   document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+    if (typeof el.value !== 'string') return;
     const key = el.id.slice(prefix.length + 1);
     fields[key] = el.value.trim();
   });
@@ -710,6 +870,7 @@ const PREFIX = { contract: 'c', act: 'a', gdpr: 'g' };
 /* ── GENERATE ── */
 async function generate(docType) {
   const fields = collectFields(PREFIX[docType]);
+  if (docType === 'act') fields.services = collectActServices();
   const fmt = selectedFmt[docType];
   const spinner = document.getElementById('spin-' + docType);
   const btn = spinner.closest('.generate-btn');
@@ -737,7 +898,7 @@ async function generate(docType) {
     a.download = `${docType}_${fields.doc_number || 'document'}.${fmt}`;
     a.click();
     URL.revokeObjectURL(url);
-    showNotif('✓ Документ успішно згенеровано!', 'success');
+    showNotif('Документ успішно згенеровано! ✓ ', 'success');
 
   } catch (e) {
     showNotif('❌ Помилка з\'єднання з сервером', 'error');
