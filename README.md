@@ -14,7 +14,7 @@
 
 ## 1. Огляд проекту
 
-**DocGen** — веб-сервіс, що дозволяє генерувати стандартизовані ділові документи у форматах **PDF** та **DOCX** через зручний браузерний інтерфейс або REST API.
+**DocGen** — веб-сервіс, що дозволяє генерувати стандартизовані ділові документи у форматах **PDF** та **DOCX** через зручний браузерний інтерфейс або REST API. Документи генеруються українською мовою з повною підтримкою кирилиці.
 
 ### Підтримувані типи документів
 
@@ -32,7 +32,7 @@
 | Генерація PDF | **ReportLab** 4.x |
 | Генерація DOCX | **python-docx** 1.x |
 | Фронтенд | Vanilla HTML/CSS/JS (без фреймворків) |
-| Шрифти PDF | Helvetica (вбудовані в ReportLab) |
+| Шрифти PDF | Arial / DejaVu Sans (TTF, з кирилицею) |
 
 ---
 
@@ -43,8 +43,9 @@
 │                   БРАУЗЕР                        │
 │  ┌───────────────────────────────────────────┐  │
 │  │  index.html  –  форма вводу + JS-логіка   │  │
-│  │  • switchTab()  • collectFields()          │  │
-│  │  • generate()   • showNotif()              │  │
+│  │  • switchTab()       • collectFields()     │  │
+│  │  • generate()        • showNotif()         │  │
+│  │  • addServiceRow()   • collectActServices()│  │
 │  └──────────────┬────────────────────────────┘  │
 └─────────────────┼───────────────────────────────┘
                   │  POST /api/generate (JSON)
@@ -72,7 +73,7 @@
 ### Потік даних
 
 1. Користувач заповнює форму в браузері
-2. JavaScript збирає поля через `collectFields(prefix)` та надсилає `POST /api/generate`
+2. JavaScript збирає поля через `collectFields(prefix)`; для акта додатково пакує список послуг у масив `services` через `collectActServices()`
 3. Flask отримує JSON: `{ doc_type, format, fields }`
 4. Відповідна функція-білдер (`get_*_data`) перетворює поля на структуру `doc_data`
 5. Генератор (ReportLab або python-docx) рендерить документ у байти
@@ -107,7 +108,7 @@ docgen/
 # 1. Клонуйте / розпакуйте проект
 cd docgen
 
-# 2. (Рекомендовано) Створіть та активуйте ввіртуальне середовище
+# 2. (Рекомендовано) Створіть та активуйте віртуальне середовище
 python -m venv venv
 source venv/bin/activate        # Linux/macOS
 # або:
@@ -129,6 +130,19 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ```
 
+### Шрифти для кирилиці (PDF)
+
+При старті `app.py` автоматично шукає TTF-шрифт у системних каталогах:
+
+| ОС | Шлях |
+|----|------|
+| Windows | `C:\Windows\Fonts\arial.ttf` |
+| Linux | `/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf` або Liberation |
+| macOS | `/Library/Fonts/Arial.ttf` |
+| Будь-яка | `fonts/DejaVuSans.ttf` поряд з `app.py` (бандл) |
+
+Якщо жоден шрифт не знайдено — PDF генерується з Helvetica (лише латиниця).
+
 ---
 
 ## 5. API документація
@@ -142,14 +156,14 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:app
 Content-Type: application/json
 ```
 
-**Тіло запиту:**
+**Тіло запиту — Договір:**
 ```json
 {
   "doc_type": "contract",
   "format":   "pdf",
   "fields": {
-    "doc_number":          "2024-001",
-    "date":                "2024-12-01",
+    "doc_number":          "2026-001",
+    "date":                "2026-05-03",
     "city":                "Київ",
     "provider_name":       "ТОВ «Виконавець»",
     "provider_code":       "12345678",
@@ -160,13 +174,34 @@ Content-Type: application/json
     "service_description": "Розробка веб-застосунку",
     "amount":              "50000",
     "payment_days":        "5",
-    "deadline":            "2024-12-31"
+    "deadline":            "2026-12-31"
+  }
+}
+```
+
+**Тіло запиту — Акт виконаних робіт:**
+```json
+{
+  "doc_type": "act",
+  "format":   "pdf",
+  "fields": {
+    "doc_number":      "АКТ-2026-001",
+    "date":            "2026-05-03",
+    "city":            "Київ",
+    "provider_name":   "ТОВ «Виконавець»",
+    "client_name":     "ФОП Іваненко",
+    "contract_number": "2026-001",
+    "contract_date":   "2026-04-01",
+    "services": [
+      { "description": "Розробка фронтенду", "unit": "години",  "quantity": "20", "unit_price": "600" },
+      { "description": "Дизайн інтерфейсу",  "unit": "послуга", "quantity": "1",  "unit_price": "5000" }
+    ]
   }
 }
 ```
 
 **Відповідь (200 OK):**
-Бінарний файл із заголовком `Content-Disposition: attachment; filename="contract_2024-001.pdf"`.
+Бінарний файл із заголовком `Content-Disposition: attachment; filename="contract_2026-001.pdf"`.
 
 **Коди помилок:**
 
@@ -197,7 +232,7 @@ curl -X POST http://localhost:5000/api/generate \
     "subtitle": str | None,       # Підзаголовок (необов'язково)
     "number":   str,              # Номер документа
     "city":     str,              # Місто
-    "date":     str,              # Дата (DD.MM.YYYY)
+    "date":     str,              # Дата (YYYY-MM-DD)
     "sections": [
         {
             "heading": str,       # Заголовок секції
@@ -242,15 +277,23 @@ curl -X POST http://localhost:5000/api/generate \
 |------|:-----------:|------|
 | `doc_number` | ✓ | Номер акта |
 | `date` | ✓ | Дата |
+| `city` | | Місто |
 | `provider_name` | ✓ | Виконавець |
 | `client_name` | ✓ | Замовник |
 | `contract_number` | | Номер договору-підстави |
 | `contract_date` | | Дата договору |
-| `service_description` | ✓ | Найменування послуги |
-| `unit` | | Одиниця виміру |
-| `quantity` | | Кількість |
-| `amount` | ✓ | Загальна сума (грн) |
-| `amount_words` | | Сума прописом |
+| `services` | ✓ | Масив послуг (див. нижче) |
+
+Кожен елемент масиву `services`:
+
+| Поле | Опис |
+|------|------|
+| `description` | Найменування послуги |
+| `unit` | Одиниця виміру (`послуга` / `години`) |
+| `quantity` | Кількість |
+| `unit_price` | Ціна за одиницю (грн) |
+
+Загальна сума розраховується бекендом як `∑ quantity × unit_price`.
 
 #### GDPR-запит (`gdpr`)
 
@@ -281,8 +324,8 @@ def get_invoice_data(fields: dict) -> dict:
     return {
         "title": "РАХУНОК-ФАКТУРА",
         "number": fields.get("doc_number", "001"),
-        "city": fields.get("city", "Київ"),
-        "date": fields.get("date", datetime.today().strftime("%d.%m.%Y")),
+        "city": fields.get("city", ""),
+        "date": fields.get("date", datetime.today().strftime("%Y-%m-%d")),
         "sections": [
             {
                 "heading": "РЕКВІЗИТИ",
@@ -327,9 +370,8 @@ DOCUMENT_BUILDERS = {
 | Нумерація документів | Лічильник у БД |
 | Черга генерації | Celery + Redis |
 | Хмарне сховище | AWS S3 / Google Cloud Storage |
-| Кирилиця в PDF (TTF) | `pdfmetrics.registerFont(TTFont(...))` |
 | Email-відправка | Flask-Mail |
-| Кілька мов | Jinja2 шаблони + i18n |
+| Кілька мов | Словник перекладів + параметр `lang` у запиті |
 
 ### Docker (приклад)
 
@@ -343,6 +385,15 @@ EXPOSE 8000
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
 ```
 
+> **Увага:** у Docker-образі на базі `python:slim` системні шрифти відсутні.
+> Для підтримки кирилиці у PDF скопіюйте TTF-файли у директорію `fonts/` поряд з `app.py` перед збіркою образу:
+> ```
+> fonts/
+> ├── DejaVuSans.ttf
+> ├── DejaVuSans-Bold.ttf
+> └── DejaVuSans-Oblique.ttf
+> ```
+
 ```bash
 docker build -t docgen .
 docker run -p 8000:8000 docgen
@@ -350,4 +401,4 @@ docker run -p 8000:8000 docgen
 
 ---
 
-*Документацію складено для DocGen v1.0*
+*Документацію складено для DocGen v1.1*
